@@ -1,6 +1,6 @@
 # pose1runpod_
 ComfyUI workflow Dockerized via [comfyui-wizard](https://comfy.getrunpod.io).
-Submission: https://comfy.getrunpod.io/dashboard/submissions/kd73aeyes9y15zf40rwb6a90yh8ck9tq
+Submission: https://comfy.getrunpod.io/dashboard/submissions/kd74zmtbjxpmsqdwz2e0jf9wv98cpjgr
 ## Build it yourself
 ```bash
 docker build -t my-comfy-workflow .

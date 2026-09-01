@@ -21,3 +21,13 @@ docker build --build-arg HF_TOKEN=$HF_TOKEN --build-arg CIVITAI_API_KEY=$CIVITAI
 - `workflow.json` — the raw workflow, as you designed it in ComfyUI
 - `api-workflow.json` — converted to ComfyUI's `/prompt` API shape (use this for serverless)
 - `README.md` — this file
+# AIGentMag Serverless worker
+
+This worker uses RunPod's official ComfyUI 5.8.7 base image, installs the
+OpenPose preprocessor required by the magazine workflow, and reads the Flux 2
+models from the `aigentmag-data` network volume instead of baking them into the
+container image.
+
+Expected model root:
+
+`/runpod-volume/runpod-slim/ComfyUI/models`

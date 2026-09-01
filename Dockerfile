@@ -1,19 +1,15 @@
-# clean base image containing only comfyui, comfy-cli and comfyui-manager
-FROM runpod/worker-comfyui:5.8.4-base
+FROM runpod/worker-comfyui:5.8.7-base
 
-# build-time tokens for gated downloads — never baked into final image.
-# pass via: docker build --build-arg HF_TOKEN=$HF_TOKEN ...
-ARG HF_TOKEN=""
+ARG CONTROLNET_AUX_COMMIT=59b1fc411ede8623b2997855b8018f0b3b6cf49f
 
-# download models into comfyui
-RUN BACKOFFS="10 20 30 60 90" && for i in 1 2 3 4 5; do HF_TOKEN=$HF_TOKEN comfy model download --url 'https://huggingface.co/yushan777/Flux.2-Dev/resolve/main/mistral_3_small_flux2_bf16.safetensors' --relative-path models/vae --filename 'flux2-vae.safetensors' && break; if [ $i -eq 5 ]; then echo "model-download failed after 5 attempts" >&2; exit 1; fi; SLEEP=$(echo $BACKOFFS | cut -d ' ' -f $i) && echo "model-download attempt $i failed; retrying in $SLEEP seconds" >&2; sleep $SLEEP; done
-RUN BACKOFFS="10 20 30 60 90" && for i in 1 2 3 4 5; do HF_TOKEN=$HF_TOKEN comfy model download --url 'https://huggingface.co/Comfy-Org/flux2-dev/resolve/main/split_files/diffusion_models/flux2_dev_fp8mixed.safetensors' --relative-path models/diffusion_models --filename 'flux2_dev_fp8mixed.safetensors' && break; if [ $i -eq 5 ]; then echo "model-download failed after 5 attempts" >&2; exit 1; fi; SLEEP=$(echo $BACKOFFS | cut -d ' ' -f $i) && echo "model-download attempt $i failed; retrying in $SLEEP seconds" >&2; sleep $SLEEP; done
-RUN BACKOFFS="10 20 30 60 90" && for i in 1 2 3 4 5; do HF_TOKEN=$HF_TOKEN comfy model download --url 'https://huggingface.co/yushan777/Flux.2-Dev/resolve/main/mistral_3_small_flux2_bf16.safetensors' --relative-path models/text_encoders --filename 'mistral_3_small_flux2_bf16.safetensors' && break; if [ $i -eq 5 ]; then echo "model-download failed after 5 attempts" >&2; exit 1; fi; SLEEP=$(echo $BACKOFFS | cut -d ' ' -f $i) && echo "model-download attempt $i failed; retrying in $SLEEP seconds" >&2; sleep $SLEEP; done
-RUN BACKOFFS="10 20 30 60 90" && for i in 1 2 3 4 5; do HF_TOKEN=$HF_TOKEN comfy model download --url 'https://huggingface.co/Comfy-Org/flux2-dev/resolve/1456a84e93d4f5ed8d7be9c80b51beb0e949b054/split_files/loras/Flux_2-Turbo-LoRA_comfyui.safetensors' --relative-path models/loras --filename 'Flux_2-Turbo-LoRA_comfyui.safetensors' && break; if [ $i -eq 5 ]; then echo "model-download failed after 5 attempts" >&2; exit 1; fi; SLEEP=$(echo $BACKOFFS | cut -d ' ' -f $i) && echo "model-download attempt $i failed; retrying in $SLEEP seconds" >&2; sleep $SLEEP; done
+RUN git clone https://github.com/Fannovel16/comfyui_controlnet_aux.git \
+      /comfyui/custom_nodes/comfyui_controlnet_aux \
+    && cd /comfyui/custom_nodes/comfyui_controlnet_aux \
+    && git checkout "${CONTROLNET_AUX_COMMIT}" \
+    && uv pip install -r requirements.txt
 
-# copy all input data (like images or videos) into comfyui (uncomment and adjust if needed)
-# COPY input/ /comfyui/input/
+COPY extra_model_paths.yaml /comfyui/extra_model_paths.yaml
 
-# user-provided inputs override the auto-generated placeholders above.
-RUN wget --progress=dot:giga -O '/comfyui/input/Flux2_00056_.png' "https://cool-anteater-319.convex.cloud/api/storage/ccb8ed4a-ef5b-4598-ae09-aed3840195e8"
-RUN wget --progress=dot:giga -O '/comfyui/input/prof.jpg' "https://cool-anteater-319.convex.cloud/api/storage/22b20001-1ebf-4209-9c59-4c7b4119c816"
+RUN cd /comfyui && timeout 300 python main.py --quick-test-for-ci --cpu
+
+CMD ["/start.sh"]

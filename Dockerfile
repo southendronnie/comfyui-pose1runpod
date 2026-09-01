@@ -1,4 +1,4 @@
-FROM runpod/worker-comfyui:5.8.7-base
+FROM runpod/worker-comfyui:5.9.0-base
 
 ARG CONTROLNET_AUX_COMMIT=59b1fc411ede8623b2997855b8018f0b3b6cf49f
 
